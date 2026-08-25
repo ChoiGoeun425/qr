@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTTP/모바일 전용 고화질 QR 스캐너</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 20px; background: #f4f4f9; }
+    .card { background: white; padding: 20px; border-radius: 12px; max-width: 400px; margin: 0 auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    #reader { width: 100%; margin-bottom: 15px; }
+    .btn { display: block; width: 100%; padding: 12px; margin: 8px 0; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+    .btn-camera { background: #007bff; color: white; }
+    .btn-file { background: #28a745; color: white; }
+    #result { margin-top: 15px; padding: 10px; background: #eee; border-radius: 6px; word-break: break-all; }
+    input[type="file"] { display: none; }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <h2>📱 모바일 QR 스캐너</h2>
+  <div id="reader"></div>
+
+  <!-- 1. 보안 허용 환경(HTTPS/Localhost)용 실시간 카메라 -->
+  <button class="btn btn-camera" onclick="startLiveCamera()">📷 실시간 카메라 켜기</button>
+
+  <!-- 2. HTTP/보안 제한 환경용 100% 동작 카메라 (사진 촬영 방식) -->
+  <label for="camera-input" class="btn btn-file">📸 모바일 촬영으로 즉시 스캔 (HTTP 완벽 지원)</label>
+  <input type="file" id="camera-input" accept="image/*" capture="environment" onchange="scanFromPhoto(this)">
+
+  <div id="result">QR 스캔 결과가 여기에 표시됩니다.</div>
+</div>
+
+<script>
+  let html5QrCode = new Html5Qrcode("reader");
+
+  // 실시간 라이브 카메라 (HTTPS 또는 localhost 접속 시 활성화)
+  function startLiveCamera() {
+    html5QrCode.start(
+      { facingMode: "environment" },
+      { fps: 15, qrbox: 250 },
+      (text) => { document.getElementById("result").innerText = "스캔 성공: " + text; }
+    ).catch(err => {
+      alert("HTTP 환경에서는 실시간 카메라 스트리밍이 제한될 수 있습니다.\n아래 '모바일 촬영으로 즉시 스캔' 버튼을 사용해 주세요!");
+    });
+  }
+
+  // HTTP 환경 및 모든 모바일 브라우저 100% 호환 카메라 스캔
+  function scanFromPhoto(input) {
+    if (input.files.length === 0) return;
+    html5QrCode.scanFile(input.files[0], true)
+      .then(text => {
+        document.getElementById("result").innerText = "스캔 성공: " + text;
+      })
+      .catch(err => {
+        alert("QR 코드를 인식하지 못했습니다. 초점을 맞춰 다시 찍어주세요.");
+      });
+  }
+</script>
+
+</body>
+</html>
